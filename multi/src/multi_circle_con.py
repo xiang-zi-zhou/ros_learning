@@ -112,7 +112,7 @@ def uav_takeoff(uav_namespace, target_alt=2.0):
     while not rospy.is_shutdown() and not all_takeoff_complete:
         rospy.sleep(0.1)
 
-def uav_circle(uav_namespace, radius=5.0, target_alt=3.0, angular_vel=0.5):
+def uav_circle(uav_namespace, radius=5.0, target_alt=3.0, angular_vel=0.1):
     pos_pub, _, _ = init_ros_io(uav_namespace)
 
     rospy.loginfo(f"{uav_namespace} 等待无人机初始化...")
@@ -160,11 +160,11 @@ def uav_circle(uav_namespace, radius=5.0, target_alt=3.0, angular_vel=0.5):
         pose.header.stamp = rospy.Time.now()
         pos_pub.publish(pose)
 
-        # 每60度打印一次状态
-        if int(math.degrees(angle)) % 60 == 0 and angle % (math.pi/3) < 0.1:
-            rospy.loginfo(f"{uav_namespace} 绕圈进度：{math.degrees(angle):.0f}° | 位置(X,Y): ({pose.pose.position.x:.2f},{pose.pose.position.y:.2f})")
+        # # 每60度打印一次状态
+        # if int(math.degrees(angle)) % 60 == 0 and angle % (math.pi/3) < 0.1:
+        #     rospy.loginfo(f"{uav_namespace} 绕圈进度：{math.degrees(angle):.0f}° | 位置(X,Y): ({pose.pose.position.x:.2f},{pose.pose.position.y:.2f})")
         
-        # 完成一圈后返回起点并退出
+        # 完成一圈+0.5*Pi后返回起点并退出
         if angle >= 2.5 * math.pi:
             rospy.loginfo(f"{uav_namespace} 完成一圈，返回起点")
             # 发送起点位置（连续50次确保稳定）
@@ -200,20 +200,21 @@ if __name__ == '__main__':
             {'namespace': 'uav0', 'takeoff_alt': 2.0, 'circle_radius': 5.0, 'circle_alt': 3.0},
             {'namespace': 'uav1', 'takeoff_alt': 5.0, 'circle_radius': 3.0, 'circle_alt': 5.0}
         ]
+        #### 列表推导式（List Comprehension）：从 uavs 列表中，批量提取每架无人机的 namespace（命名空间），生成一个新的列表
         uav_namespaces = [uav['namespace'] for uav in uavs]
         
-        # 启动线程监控所有无人机是否完成起飞
+        # 启动线程监控所有无人机是否完成起飞，专门监控所有无人机起飞状态的线程
         Thread(target=check_all_takeoff_complete, args=(uav_namespaces,), daemon=True).start()
         
         # 为每个无人机启动起飞线程
-        takeoff_threads = []
+        takeoff_threads = []###创建空列表
         for uav in uavs:
             thread = Thread(
                 target=uav_takeoff,
                 args=(uav['namespace'], uav['takeoff_alt']),
                 daemon=True
             )
-            takeoff_threads.append(thread)
+            takeoff_threads.append(thread)##########append() 将一个元素（这里是线程对象 thread）添加到列表的末尾【填满空列表】
             thread.start()
         
         # 等待所有起飞线程完成（实际是等待同步信号）
