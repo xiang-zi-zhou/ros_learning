@@ -1,17 +1,19 @@
 <?xml version="1.0"?>
 <launch>
     <!-- MAVROS posix SITL environment launch script -->
-    <!-- 启动Gazebo环境和9架飞机: 包含MAVROS, PX4 SITL和飞行器生成 -->
-    <!-- 飞行器模型和世界 -->
+    <!-- 启动Gazebo环境和9架无人机: 包含MAVROS, PX4 SITL和飞行器生成 -->
+    <!-- 飞行器模型和世界配置 -->
     <arg name="est" default="ekf2"/>
-    <arg name="vehicle" default="plane"/>
+    <arg name="vehicle" default="plane"/> <!-- 默认固定翼，启动时可指定为iris多旋翼 -->
     <arg name="world" default="$(find mavlink_sitl_gazebo)/worlds/empty.world"/>
-    <!-- Gazebo配置 -->
-    <arg name="gui" default="true"/>
-    <arg name="debug" default="false"/>
-    <arg name="verbose" default="false"/>
-    <arg name="paused" default="false"/>
-    <!-- Gazebo仿真 -->
+    
+    <!-- Gazebo仿真配置（关键修复：使用正确的Gazebo启动文件） -->
+    <arg name="gui" default="true"/>      <!-- 是否显示Gazebo界面 -->
+    <arg name="debug" default="false"/>   <!-- 是否启用调试模式 -->
+    <arg name="verbose" default="false"/> <!-- 是否显示详细日志 -->
+    <arg name="paused" default="false"/>  <!-- 启动时是否暂停仿真 -->
+    
+    <!-- 启动Gazebo空世界（使用ROS官方gazebo_ros包的empty_world.launch，支持上述参数） -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <arg name="gui" value="$(arg gui)"/>
         <arg name="world_name" value="$(arg world)"/>
@@ -20,28 +22,30 @@
         <arg name="paused" value="$(arg paused)"/>
     </include>
 
-    <!-- 3x3方阵排列，每架飞机间隔3个单位 -->
+    <!-- 3x3方阵排列，每架无人机间隔3个单位（保留原配置，仅修复子文件引用） -->
     <!-- UAV0: (0, 0) -->
     <group ns="uav0">
         <arg name="ID" value="0"/>
         <arg name="fcu_url" default="udp://:14540@localhost:14580"/>
-        <include file="$(find px4)/launch/single_vehicle_spawn_sdf.launch">
-            <arg name="x" value="0"/>
-            <arg name="y" value="0"/>
-            <arg name="z" value="0"/>
-            <arg name="R" value="0"/>
-            <arg name="P" value="0"/>
-            <arg name="Y" value="0"/>
-            <arg name="vehicle" value="$(arg vehicle)"/>
-            <arg name="mavlink_udp_port" value="14560"/>
-            <arg name="mavlink_tcp_port" value="4560"/>
-            <arg name="ID" value="$(arg ID)"/>
+        <!-- 生成单个无人机（single_vehicle_spawn_sdf.launch仅负责生成模型，不处理Gazebo参数） -->
+        <include file="/home/tuan/PX4-Autopilot/launch/single_vehicle_spawn_sdf.launch">
+            <arg name="x" value="0"/>          <!-- X轴坐标 -->
+            <arg name="y" value="0"/>          <!-- Y轴坐标 -->
+            <arg name="z" value="0"/>          <!-- Z轴坐标（高度） -->
+            <arg name="R" value="0"/>          <!-- 滚转角（弧度） -->
+            <arg name="P" value="0"/>          <!-- 俯仰角（弧度） -->
+            <arg name="Y" value="0"/>          <!-- 偏航角（弧度） -->
+            <arg name="vehicle" value="$(arg vehicle)"/> <!-- 无人机模型 -->
+            <arg name="mavlink_udp_port" value="14560"/> <!-- MAVLink UDP端口 -->
+            <arg name="mavlink_tcp_port" value="4560"/> <!-- MAVLink TCP端口 -->
+            <arg name="ID" value="$(arg ID)"/> <!-- 无人机ID -->
         </include>
+        <!-- 启动MAVROS节点（建立ROS与无人机的通信） -->
         <include file="$(find mavros)/launch/px4.launch">
             <arg name="fcu_url" value="$(arg fcu_url)"/>
-            <arg name="gcs_url" value=""/>
-            <arg name="tgt_system" value="$(eval 1 + arg('ID'))"/>
-            <arg name="tgt_component" value="1"/>
+            <arg name="gcs_url" value=""/>     <!-- 不指定地面站（可根据需求添加） -->
+            <arg name="tgt_system" value="$(eval 1 + arg('ID'))"/> <!-- 系统ID（1~9） -->
+            <arg name="tgt_component" value="1"/> <!-- 组件ID（固定为1） -->
         </include>
     </group>
 
@@ -49,7 +53,7 @@
     <group ns="uav1">
         <arg name="ID" value="1"/>
         <arg name="fcu_url" default="udp://:14541@localhost:14581"/>
-        <include file="$(find px4)/launch/single_vehicle_spawn_sdf.launch">
+        <include file="/home/tuan/PX4-Autopilot/launch/single_vehicle_spawn_sdf.launch">
             <arg name="x" value="3"/>
             <arg name="y" value="0"/>
             <arg name="z" value="0"/>
@@ -73,7 +77,7 @@
     <group ns="uav2">
         <arg name="ID" value="2"/>
         <arg name="fcu_url" default="udp://:14542@localhost:14582"/>
-        <include file="$(find px4)/launch/single_vehicle_spawn_sdf.launch">
+        <include file="/home/tuan/PX4-Autopilot/launch/single_vehicle_spawn_sdf.launch">
             <arg name="x" value="6"/>
             <arg name="y" value="0"/>
             <arg name="z" value="0"/>
@@ -97,7 +101,7 @@
     <group ns="uav3">
         <arg name="ID" value="3"/>
         <arg name="fcu_url" default="udp://:14543@localhost:14583"/>
-        <include file="$(find px4)/launch/single_vehicle_spawn_sdf.launch">
+        <include file="/home/tuan/PX4-Autopilot/launch/single_vehicle_spawn_sdf.launch">
             <arg name="x" value="0"/>
             <arg name="y" value="3"/>
             <arg name="z" value="0"/>
@@ -121,7 +125,7 @@
     <group ns="uav4">
         <arg name="ID" value="4"/>
         <arg name="fcu_url" default="udp://:14544@localhost:14584"/>
-        <include file="$(find px4)/launch/single_vehicle_spawn_sdf.launch">
+        <include file="/home/tuan/PX4-Autopilot/launch/single_vehicle_spawn_sdf.launch">
             <arg name="x" value="3"/>
             <arg name="y" value="3"/>
             <arg name="z" value="0"/>
@@ -145,7 +149,7 @@
     <group ns="uav5">
         <arg name="ID" value="5"/>
         <arg name="fcu_url" default="udp://:14545@localhost:14585"/>
-        <include file="$(find px4)/launch/single_vehicle_spawn_sdf.launch">
+        <include file="/home/tuan/PX4-Autopilot/launch/single_vehicle_spawn_sdf.launch">
             <arg name="x" value="6"/>
             <arg name="y" value="3"/>
             <arg name="z" value="0"/>
@@ -169,7 +173,7 @@
     <group ns="uav6">
         <arg name="ID" value="6"/>
         <arg name="fcu_url" default="udp://:14546@localhost:14586"/>
-        <include file="$(find px4)/launch/single_vehicle_spawn_sdf.launch">
+        <include file="/home/tuan/PX4-Autopilot/launch/single_vehicle_spawn_sdf.launch">
             <arg name="x" value="0"/>
             <arg name="y" value="6"/>
             <arg name="z" value="0"/>
@@ -193,7 +197,7 @@
     <group ns="uav7">
         <arg name="ID" value="7"/>
         <arg name="fcu_url" default="udp://:14547@localhost:14587"/>
-        <include file="$(find px4)/launch/single_vehicle_spawn_sdf.launch">
+        <include file="/home/tuan/PX4-Autopilot/launch/single_vehicle_spawn_sdf.launch">
             <arg name="x" value="3"/>
             <arg name="y" value="6"/>
             <arg name="z" value="0"/>
@@ -217,7 +221,7 @@
     <group ns="uav8">
         <arg name="ID" value="8"/>
         <arg name="fcu_url" default="udp://:14548@localhost:14588"/>
-        <include file="$(find px4)/launch/single_vehicle_spawn_sdf.launch">
+        <include file="/home/tuan/PX4-Autopilot/launch/single_vehicle_spawn_sdf.launch">
             <arg name="x" value="6"/>
             <arg name="y" value="6"/>
             <arg name="z" value="0"/>
