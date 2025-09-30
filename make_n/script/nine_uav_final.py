@@ -244,6 +244,13 @@ def uav_circle(uav_namespace, radius=10.0, target_alt=5.0, angular_vel=0.1):
     center.x = 10
     center.y = 10
     center.z = 5.0  
+
+    # 反算初始角度θ（弧度制）
+    Px = current_poses[uav_namespace].pose.position.x
+    Py = current_poses[uav_namespace].pose.position.y
+    delta_x = Px - center.x
+    delta_y = Py - center.y
+    theta = math.atan2(delta_y, delta_x) 
     
     # 等待起飞完成信号
     global all_takeoff_complete
@@ -259,10 +266,11 @@ def uav_circle(uav_namespace, radius=10.0, target_alt=5.0, angular_vel=0.1):
     pose.header.frame_id = "map"
     pose.pose.position.z = target_alt
 
+
     while not rospy.is_shutdown():
         # 计算当前角度
         elapsed = (rospy.Time.now() - start_time).to_sec()
-        angle = angular_vel * elapsed
+        angle = angular_vel * elapsed + theta
 
         # 计算圆形轨迹位置
         pose.pose.position.x = center.x + radius * math.cos(angle)
@@ -282,8 +290,8 @@ def uav_circle(uav_namespace, radius=10.0, target_alt=5.0, angular_vel=0.1):
         pose.header.stamp = rospy.Time.now()
         pos_pub.publish(pose)
 
-        # 完成一圈+0.5*Pi后返回起点并退出
-        if angle >= 2.5 * math.pi:
+        # 完成一圈后返回起点并退出
+        if angle - theta >= 2 * math.pi:
             rospy.loginfo(f"{uav_namespace} 完成一圈，返回起点")
             # 发送起点位置（连续50次确保稳定）
             pose.pose.position = current_poses[uav_namespace].pose.position

@@ -4,7 +4,7 @@
     <!-- 启动Gazebo环境和9架无人机: 包含MAVROS, PX4 SITL和飞行器生成 -->
     <!-- 飞行器模型和世界配置 -->
     <arg name="est" default="ekf2"/>
-    <arg name="vehicle" default="plane"/> <!-- 默认固定翼，启动时可指定为iris多旋翼 -->
+    <arg name="vehicle" default="iris"/> <!-- 默认固定翼，启动时可指定为iris多旋翼 -->
     <arg name="world" default="$(find mavlink_sitl_gazebo)/worlds/empty.world"/>
     
     <!-- Gazebo仿真配置（关键修复：使用正确的Gazebo启动文件） -->
